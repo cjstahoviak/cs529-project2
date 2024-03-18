@@ -3,15 +3,19 @@ Logistic Regression and Friends
 
 
 ## Setup
-Requires conda installation on your system. First setup the environment:
+Since the training data is over a GB in size, it needs to be manually placed into this project. All that is missing is data\raw\train which can be retrieved from Google Drive.
+
+Next step requires a conda installation on your system. First setup the environment:
 ```bash
 conda env create -f environment.yml
 conda activate cs529_proj2
 ```
-Run...
+Then run the source code to generate a model...
 ```bash
 python src/
 ```
+
+
 
 ## File Manifest
 Project tree with description and contributions made on each source file. Both names are placed in parenthesis if both Nick and Calvin collaborated on that task.
