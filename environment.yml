@@ -1,4 +1,4 @@
-name: cs529_proj1
+name: cs529_proj2
 channels:
   - conda-forge
 dependencies:
