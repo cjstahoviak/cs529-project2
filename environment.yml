@@ -12,7 +12,3 @@ dependencies:
   - mlflow
   - pre-commit
   - ipython
-  - networkx
-  - graphviz
-  - python-graphviz
-  - pydot
