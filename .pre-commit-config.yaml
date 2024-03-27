@@ -16,4 +16,4 @@ repos:
     hooks:
       - id: black-jupyter
         language_version: python3.11
-exclude: "reports/.*|data/.*|docs/.*"
+exclude: "reports/.*|data/.*|docs/.*|README.md"
