@@ -12,3 +12,4 @@ dependencies:
   - mlflow
   - pre-commit
   - ipython
+  - librosa
