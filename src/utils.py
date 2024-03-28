@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import librosa
+import pandas as pd
 
 
 def get_genre_from_path(path: Path):
@@ -14,3 +15,19 @@ def load_audio_files(data_dir: Path):
     audio_data = [librosa.load(file)[0] for file in audio_files]
 
     return audio_data, targets
+
+
+def load_audio_to_df(data_dir: Path):
+    audio_dict = {}
+
+    for file in list(data_dir.glob("**/*.au")):
+        audio, sr = librosa.load(file)
+
+        audio_dict[file.stem] = {
+            "target": get_genre_from_path(file),
+            "audio": audio,
+            "sr": sr,
+        }
+
+    df = pd.DataFrame.from_dict(audio_dict, orient="index")
+    return df
