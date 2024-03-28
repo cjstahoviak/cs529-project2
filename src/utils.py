@@ -3,7 +3,7 @@ from pathlib import Path
 import librosa
 import pandas as pd
 
-from elementwise_transformer import ElementwiseTransformer
+from custom_transformers import ElementwiseTransformer
 
 
 def LibrosaTransformer(librosa_func=None):
