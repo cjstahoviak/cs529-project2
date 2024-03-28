@@ -3,21 +3,6 @@ from pathlib import Path
 import librosa
 import pandas as pd
 
-from custom_transformers import ElementwiseTransformer
-
-
-def LibrosaTransformer(librosa_func=None):
-    """Constructs a transformer which applies a librosa function to each element of the input.
-    Necessary because librosa functions expect the audio data to be the first keyword argument.
-
-    Args:
-        librosa_func (_type_, optional): Librosa function. Defaults to None.
-
-    Returns:
-        ElementwiseTransformer: Transformer which applies librosa function to each element of the input.
-    """
-    return ElementwiseTransformer(lambda x, **kwargs: librosa_func(y=x, **kwargs))
-
 
 def get_genre_from_path(path: Path):
     return path.parts[-2]
