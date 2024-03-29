@@ -2,6 +2,35 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing._function_transformer import _identity
 import numpy as np
 from pandas import Series
+from sklearn.base import BaseEstimator, TransformerMixin
+from utils import describe_as_df
+import pandas as pd
+
+
+class ElementwiseSummaryStats(BaseEstimator, TransformerMixin):
+    def __init__(self, desc_kw_args):
+        self.desc_kw_args = desc_kw_args
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        if self.desc_kw_args is None:
+            self.desc_kw_args = {}
+
+        res = []
+
+        for x_i in X:
+            res.append(describe_as_df(x_i, desc_kw_args=self.desc_kw_args))
+
+        output_df = pd.concat(res)
+
+        if isinstance(X, Series):
+            output_df.index = X.index
+        else:
+            output_df.reset_index(drop=True, inplace=True)
+
+        return output_df
 
 
 class ElementwiseTransformer(FunctionTransformer):
