@@ -12,7 +12,7 @@ class ElementwiseSummaryStats(BaseEstimator, TransformerMixin):
     and concatenates the results into a single DataFrame.
     """
 
-    def __init__(self, desc_kw_args):
+    def __init__(self, desc_kw_args=None):
         self.desc_kw_args = desc_kw_args
 
     def fit(self, X, y=None):
