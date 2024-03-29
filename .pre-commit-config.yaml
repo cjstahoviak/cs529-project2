@@ -16,4 +16,9 @@ repos:
     hooks:
       - id: black-jupyter
         language_version: python3.11
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (python)
 exclude: "reports/.*|data/.*|docs/.*|README.md"
