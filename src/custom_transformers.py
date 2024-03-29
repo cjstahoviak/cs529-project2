@@ -1,10 +1,11 @@
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing._function_transformer import _identity
 import numpy as np
+import pandas as pd
 from pandas import Series
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.preprocessing._function_transformer import _identity
+
 from utils import describe_as_df
-import pandas as pd
 
 
 class ElementwiseSummaryStats(BaseEstimator, TransformerMixin):
