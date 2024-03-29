@@ -8,6 +8,10 @@ import pandas as pd
 
 
 class ElementwiseSummaryStats(BaseEstimator, TransformerMixin):
+    """Constructs a transformer which computes the summary stats of each element of the input
+    and concatenates the results into a single DataFrame.
+    """
+
     def __init__(self, desc_kw_args):
         self.desc_kw_args = desc_kw_args
 
