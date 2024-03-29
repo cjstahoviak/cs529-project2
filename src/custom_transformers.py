@@ -1,6 +1,7 @@
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing._function_transformer import _identity
 import numpy as np
+from pandas import Series
 
 
 class ElementwiseTransformer(FunctionTransformer):
@@ -14,7 +15,13 @@ class ElementwiseTransformer(FunctionTransformer):
         vfunc = np.vectorize(lambda x, **kwargs: func(x, **kwargs), otypes=[np.ndarray])
 
         # Apply the vectorized function to the input
-        return super()._transform(X, func=vfunc, kw_args=kw_args)
+        res = super()._transform(X, func=vfunc, kw_args=kw_args)
+
+        if isinstance(X, Series):
+            res = Series(res)
+            res.index = X.index
+
+        return res
 
 
 class LibrosaTransformer(ElementwiseTransformer):
