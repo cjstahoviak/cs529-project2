@@ -34,6 +34,8 @@ class ElementwiseSummaryStats(BaseEstimator, TransformerMixin):
         else:
             output_df.reset_index(drop=True, inplace=True)
 
+        output_df.drop(("nobs", ""), axis=1, inplace=True)
+
         return output_df
 
 
