@@ -1,3 +1,5 @@
+mlruns/
+
 data/processed/
 data/raw/train/
 
