@@ -1,6 +1,7 @@
 import librosa
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from pandas import Series
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
@@ -73,12 +74,14 @@ class LibrosaTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         func = self._get_librosa_func(self.feature)
 
-        extracted_features = {}
+        extracted_features_list = Parallel(n_jobs=-1, backend="loky")(
+            delayed(func)(y=x, **self.kwargs) for x in X
+        )
 
-        iter_X = X.items() if hasattr(X, "items") else enumerate(X)
-
-        for i, x in iter_X:
-            extracted_features[i] = func(y=x, **self.kwargs)
+        if hasattr(X, "keys"):
+            extracted_features = dict(zip(X.keys(), extracted_features_list))
+        else:
+            extracted_features = extracted_features_list
 
         return extracted_features
 
