@@ -26,13 +26,13 @@ class ElementwiseSummaryStats(BaseEstimator, TransformerMixin):
 
         res = []
 
-        for x_i in X:
+        for x_i in X.values() if hasattr(X, "values") else X:
             res.append(describe_as_df(x_i, desc_kw_args=self.desc_kw_args))
 
         output_df = pd.concat(res)
 
-        if isinstance(X, Series):
-            output_df.index = X.index
+        if hasattr(X, "keys"):
+            output_df.index = X.keys()
         else:
             output_df.reset_index(drop=True, inplace=True)
 
