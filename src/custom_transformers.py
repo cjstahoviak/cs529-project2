@@ -1,3 +1,4 @@
+import librosa
 import numpy as np
 import pandas as pd
 from pandas import Series
@@ -59,14 +60,33 @@ class ElementwiseTransformer(FunctionTransformer):
         return res
 
 
-class LibrosaTransformer(ElementwiseTransformer):
+class LibrosaTransformer(BaseEstimator, TransformerMixin):
     """Constructs a transformer which applies a librosa function to each element of the input."""
 
-    def _transform(self, X, func=None, kw_args=None):
+    def __init__(self, feature: str = "chroma_stft", **kwargs):
+        self.feature = feature
+        self.kwargs = kwargs
 
-        # Construct a new function which expects the audio data to be the first keyword argument
-        def wrapped_func(x, **kwargs):
-            return func(y=x, **kwargs)
+    def fit(self, X, y=None):
+        return self
 
-        # Apply the vectorized function to the input
-        return super()._transform(X, func=wrapped_func, kw_args=kw_args)
+    def transform(self, X, y=None):
+        func = self._get_librosa_func(self.feature)
+
+        extracted_features = {}
+
+        iter_X = X.items() if hasattr(X, "items") else enumerate(X)
+
+        for i, x in iter_X:
+            extracted_features[i] = func(y=x, **self.kwargs)
+
+        return extracted_features
+
+    def _get_librosa_func(self, feature):
+        try:
+            func = getattr(librosa.feature, feature)
+            return func
+        except AttributeError:
+            raise ValueError(
+                f"The feature '{feature}' was not found in librosa.feature."
+            )
