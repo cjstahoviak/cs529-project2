@@ -93,3 +93,19 @@ class LibrosaTransformer(BaseEstimator, TransformerMixin):
             raise ValueError(
                 f"The feature '{feature}' was not found in librosa.feature."
             )
+
+    def get_params(self, deep=True):
+        params = {"feature": self.feature}
+        params.update(self.kwargs)
+        return params
+
+    def set_params(self, **parameters):
+
+        self.kwargs = {}
+        for parameter, value in parameters.items():
+            if parameter == "feature":
+                self.feature = value
+            else:
+                self.kwargs[parameter] = value
+
+        return self
