@@ -1,7 +1,6 @@
 mlruns/
 cache/
 data/processed/
-data/raw/train/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
