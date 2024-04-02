@@ -1,14 +1,7 @@
 from pathlib import Path
 
-import mlflow
-import numpy as np
 import pandas as pd
-from mlxtend.feature_selection import ColumnSelector
-from sklearn.decomposition import PCA
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit
 from sklearn.pipeline import FeatureUnion, Pipeline
-from sklearn.preprocessing import StandardScaler
 
 from custom_transformers import ElementwiseSummaryStats, LibrosaTransformer
 
