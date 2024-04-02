@@ -14,3 +14,4 @@ dependencies:
   - ipython
   - librosa
   - databricks-sdk
+  - mlextend
