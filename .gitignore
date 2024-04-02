@@ -1,5 +1,5 @@
 mlruns/
-
+cache/
 data/processed/
 data/raw/train/
 
