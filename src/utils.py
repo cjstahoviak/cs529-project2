@@ -24,7 +24,7 @@ def load_audio_to_df(data_dir: Path):
     for file in list(data_dir.glob("**/*.au")):
         audio, sr = librosa.load(file)
 
-        audio_dict[file.stem] = {
+        audio_dict[file.name] = {
             "target": get_genre_from_path(file),
             "audio": audio,
             "sr": sr,
