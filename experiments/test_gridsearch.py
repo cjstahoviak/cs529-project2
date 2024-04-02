@@ -55,6 +55,10 @@ librosa_params_grid = [
     {"feature": ["mfcc"], "n_mfcc": [13, 20, 30, 40], "n_fft": WIN_SIZES},
     {"feature": ["chroma_stft"], "n_fft": WIN_SIZES},
     {"feature": ["zero_crossing_rate"], "frame_length": WIN_SIZES},
+    {"feature": ["spectral_centroid"], "n_fft": WIN_SIZES},
+    {"feature": ["spectral_bandwidth"], "n_fft": WIN_SIZES},
+    {"feature": ["spectral_rolloff"], "n_fft": WIN_SIZES},
+    {"feature": ["spectral_contrast"], "n_fft": WIN_SIZES},
 ]
 
 # Parameters that are the same for all grid search iterations
