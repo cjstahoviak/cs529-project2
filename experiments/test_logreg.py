@@ -4,10 +4,13 @@ import pandas as pd
 from mlxtend.feature_selection import ColumnSelector
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from custom_transformers import ElementwiseSummaryStats, LibrosaTransformer
+
+# from logistic_regression import LogisticRegression
 
 # Load data
 train_fpath = Path("../data/processed/train_data.pkl").resolve()
@@ -26,10 +29,13 @@ pipe = Pipeline(
     [
         ("librosa_features", LibrosaTransformer(feature="mfcc")),
         ("summary_stats", ElementwiseSummaryStats(desc_kw_args={"axis": 1})),
-        ("stat_selector", ColumnSelector()),
+        # ("stat_selector", ColumnSelector()),
         ("scaler", StandardScaler()),
         (
             "logreg",
+            # LogisticRegression(
+            #     learning_rate=0.01, max_iter=100
+            # ),
             LogisticRegression(
                 penalty=None, max_iter=10_000, solver="saga", multi_class="multinomial"
             ),
@@ -37,5 +43,12 @@ pipe = Pipeline(
     ]
 )
 
+print("y_train shape: " + str(y_train.shape))
+print("X_train shape: " + str(X_train.shape))
+
 print("fitting pipeline...")
 pipe.fit(X_train, y_train)
+y_pred = pipe.predict(X_test)
+
+accuracy = accuracy_score(y_pred == y_train)
+print(f"Accuracy: {accuracy}")
