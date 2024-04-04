@@ -64,7 +64,7 @@ for win_size in WIN_SIZES:
     train_df = pd.concat(train_dict, axis=1, names=["feature", "statistic", "channel"])
     train_df[("target", "", "")] = y_train
 
-    test_df = pd.concat(train_dict, axis=1, names=["feature", "statistic", "channel"])
+    test_df = pd.concat(test_dict, axis=1, names=["feature", "statistic", "channel"])
 
     pd.DataFrame(train_df).to_csv(
         f"../data/processed/feature_extracted/train_features_{win_size}.csv"
