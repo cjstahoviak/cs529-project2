@@ -22,24 +22,21 @@ class ElementwiseSummaryStats(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        if self.desc_kw_args is None:
-            self.desc_kw_args = {}
+        data_dict = {}
 
-        res = []
+        for name, col in X.items():
+            stats = col.apply(lambda x: describe_as_df(x))
+            data_dict[name] = (
+                pd.concat(stats.to_dict(), axis=0).droplevel(1, axis=1).droplevel(1)
+            )
+            data_dict[name].drop(columns=["nobs"], axis=1, inplace=True)
 
-        for x_i in X.values() if hasattr(X, "values") else X:
-            res.append(describe_as_df(x_i, desc_kw_args=self.desc_kw_args))
+        return pd.concat(data_dict, axis=1)
 
-        output_df = pd.concat(res)
-
-        if hasattr(X, "keys"):
-            output_df.index = X.keys()
-        else:
-            output_df.reset_index(drop=True, inplace=True)
-
-        output_df.drop(("nobs", ""), axis=1, inplace=True)
-
-        return output_df
+    def set_output(
+        self, *, transform: None | Literal["default"] | Literal["pandas"] = None
+    ) -> BaseEstimator:
+        return self
 
 
 class ElementwiseTransformer(FunctionTransformer):
