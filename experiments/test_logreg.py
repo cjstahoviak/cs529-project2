@@ -37,7 +37,7 @@ pipe = Pipeline(
             #     learning_rate=0.01, max_iter=100
             # ),
             LogisticRegression(
-                penalty=None, max_iter=10_000, solver="saga", multi_class="multinomial"
+                penalty=None, max_iter=100, solver="saga", multi_class="multinomial"
             ),
         ),
     ]
