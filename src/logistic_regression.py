@@ -1,64 +1,108 @@
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.metrics import accuracy_score
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 
-class CustomLogisticRegression(BaseEstimator, ClassifierMixin):
+class SoftmaxRegression(BaseEstimator, ClassifierMixin):
     def __init__(self, learning_rate=0.01, max_iter=1000):
         self.learning_rate = learning_rate
         self.max_iter = max_iter
-        self.weights = None
-        self.bias = None
+        self.weight_defaults = "zero"
+        self.temperature = 1.0
 
-    def _softmax(self, Z):
-        # Subtract max for numerical stability
-        exp_scores = np.exp(Z - np.max(Z, axis=1, keepdims=True))
+    def _softmax(self, logits):
+        # TODO: Implement temperature hyperparameter
+
+        # Subtract the maximum value from the logits to prevent overflow
+        exp_scores = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         return exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 
     def fit(self, X, y):
-        X = np.array(X)  # Ensure `X` is a NumPy array
+        # Convert X and y to numpy arrays if they are pandas DataFrames
+        if isinstance(X, pd.DataFrame):
+            X = X.values
+        if isinstance(y, pd.Series):
+            y = y.values
 
-        n_samples, n_features = X.shape
+        # Validate input X and y are correctly sized
+        X, y = check_X_y(X, y)
+
+        n_instances, n_features = X.shape
         self.classes_ = np.unique(y)
         n_classes = len(self.classes_)
 
-        # Initialize weights and bias
-        self.weights = np.zeros((n_features, n_classes))
-        self.bias = np.zeros(n_classes)
+        # TODO: Move under one-hot encoding
+        self.label_to_original_ = {i: label for i, label in enumerate(self.classes_)}
+
+        # TODO: Merge bias into weights
+        if self.weight_defaults == "zero":
+            self.weights_ = np.zeros((n_features, n_classes))
+            self.bias_ = np.zeros(n_classes)
+        elif self.weight_defaults == "random":
+            self.weights_ = np.random.randn(n_features, n_classes)
+            self.bias_ = np.random.randn(n_classes)
 
         # Convert labels to one-hot encoding
-        y_one_hot = np.zeros((n_samples, n_classes))
+        y_one_hot = np.zeros((n_instances, n_classes))
         for i, c in enumerate(self.classes_):
             y_one_hot[:, i] = y == c
 
-        # Gradient descent
-        for _ in range(self.max_iter):
-            # scores = np.dot(X, self.weights) + self.bias
-            scores = X.dot(self.weights) + self.bias
-            probabilities = self._softmax(scores)
+        prev_loss = None  # For tracking loss over time
+        for i in range(self.max_iter):
+            logits = np.dot(X, self.weights_) + self.bias_
+            probabilities = self._softmax(logits)
 
-            # Compute gradients
-            dw = (1 / n_samples) * np.dot(X.T, (probabilities - y_one_hot))
-            db = (1 / n_samples) * np.sum(probabilities - y_one_hot, axis=0)
+            # Compute gradients of loss function with respect to logits, weights and bias
+            grad_logits = probabilities - y_one_hot
+            grad_weights = (1 / n_instances) * np.dot(X.T, grad_logits)
+            grad_bias = (1 / n_instances) * np.sum(grad_logits, axis=0)
 
             # Update weights and bias
-            self.weights -= self.learning_rate * dw
-            self.bias -= self.learning_rate * db
+            self.weights_ -= self.learning_rate * grad_weights
+            self.bias_ -= self.learning_rate * grad_bias
 
+            # TODO: Implement learning rate decay
+
+            # Track loss and loss-change
+            loss = -np.mean(np.sum(y_one_hot * np.log(probabilities + 1e-9), axis=1))
+            if (
+                prev_loss is not None
+            ):  # Calculate and print change in loss if not the first iteration
+                loss_change = loss - prev_loss
+                if i % 100 == 0:
+                    print(
+                        f"Iteration {i:6}: Loss {loss:10.6f}, Change in Loss {loss_change:10.6f}"
+                    )
+            else:
+                if i % 100 == 0:
+                    print(f"Iteration {i:6}: Loss {loss:10.6f}")
+            prev_loss = loss  # Update the previous loss with the current loss
+
+        print("Training complete.")
         return self
 
     def predict_proba(self, X):
-        scores = np.dot(X, self.weights) + self.bias
+        check_is_fitted(self)
+
+        X = check_array(X)
+        scores = np.dot(X, self.weights_) + self.bias_
         probabilities = self._softmax(scores)
+
         return probabilities
 
     def predict(self, X):
         probabilities = self.predict_proba(X)
-        return np.argmax(probabilities, axis=1)
+        integer_predictions = np.argmax(probabilities, axis=1)
+
+        # Convert integer predictions back to original target names
+        original_predictions = np.vectorize(self.label_to_original_.get)(
+            integer_predictions
+        )
+
+        return original_predictions
 
     def score(self, X, y):
-        from sklearn.metrics import accuracy_score
-
         predictions = self.predict(X)
         return accuracy_score(y, predictions)
