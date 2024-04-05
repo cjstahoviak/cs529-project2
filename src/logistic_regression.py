@@ -1,9 +1,10 @@
 import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 
-class LogisticRegression(BaseEstimator, ClassifierMixin):
+class CustomLogisticRegression(BaseEstimator, ClassifierMixin):
     def __init__(self, learning_rate=0.01, max_iter=1000):
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -16,6 +17,8 @@ class LogisticRegression(BaseEstimator, ClassifierMixin):
         return exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 
     def fit(self, X, y):
+        X = np.array(X)  # Ensure `X` is a NumPy array
+
         n_samples, n_features = X.shape
         self.classes_ = np.unique(y)
         n_classes = len(self.classes_)
@@ -31,7 +34,8 @@ class LogisticRegression(BaseEstimator, ClassifierMixin):
 
         # Gradient descent
         for _ in range(self.max_iter):
-            scores = np.dot(X, self.weights) + self.bias
+            # scores = np.dot(X, self.weights) + self.bias
+            scores = X.dot(self.weights) + self.bias
             probabilities = self._softmax(scores)
 
             # Compute gradients
