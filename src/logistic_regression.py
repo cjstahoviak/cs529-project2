@@ -14,12 +14,14 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         weight_defaults="zero",
         temperature=1.0,
         verbose=0,
+        tol=1e-4,
     ):
         self.learning_rate = learning_rate
         self.max_iter = max_iter
         self.weight_defaults = "zero"
         self.temperature = 1.0
         self.verbose = 0  # Prints loss and loss-change
+        self.tol = tol
 
     def _softmax(self, logits):
         # TODO: Implement temperature hyperparameter
@@ -74,8 +76,10 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
     def _optimize(self, X, y_one_hot):
         n_instances = X.shape[0]
 
-        prev_loss = None  # For tracking loss over time
-        for i in range(self.max_iter):
+        loss = []
+        current_iter = 0
+
+        while current_iter < self.max_iter:
             logits = np.dot(X, self.weights_) + self.bias_
             probabilities = self._softmax(logits)
 
@@ -91,21 +95,30 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
             # TODO: Implement learning rate decay
 
             # Track loss and loss-change
-            loss = -np.mean(np.sum(y_one_hot * np.log(probabilities + 1e-9), axis=1))
-            if (
-                prev_loss is not None
-            ):  # Calculate and print change in loss if not the first iteration
-                loss_change = loss - prev_loss
-                if i % 100 and self.verbose:
-                    print(
-                        f"Iteration {i:6}: Loss {loss:10.6f}, Change in Loss {loss_change:10.6f}"
-                    )
-            else:
-                if i % 100 and self.verbose:
-                    print(f"Iteration {i:6}: Loss {loss:10.6f}")
-            prev_loss = loss  # Update the previous loss with the current loss
+            current_loss = -np.mean(
+                np.sum(y_one_hot * np.log(probabilities + 1e-9), axis=1)
+            )
+            loss.append(current_loss)
 
-        print("Training complete.")
+            # Calculate and print change in loss if not the first iteration
+            if current_iter > 0:
+                loss_change = loss[current_iter - 1] - loss[current_iter]
+                if current_iter % 100 and self.verbose:
+                    print(
+                        f"Iteration {current_iter:6}: Loss {loss:10.6f}, Change in Loss {loss_change:10.6f}"
+                    )
+                if loss_change < self.tol:
+                    if self.verbose:
+                        print(f"Converged after {current_iter} iterations.")
+                    return
+            else:
+                if current_iter % 100 and self.verbose:
+                    print(f"Iteration {current_iter:6}: Loss {loss:10.6f}")
+
+            current_iter += 1
+
+        if self.verbose:
+            print("Maximum number of iterations reached.")
 
     def predict_proba(self, X):
         check_is_fitted(self)
