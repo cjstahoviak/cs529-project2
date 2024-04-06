@@ -60,11 +60,19 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         y_one_hot = self.y_encoder_.fit_transform(y)
 
         self.classes_ = self.y_encoder_.classes_
-        n_instances, n_features = X.shape
         n_classes = len(self.classes_)
+        n_features = X.shape[1]
 
         # Initialize weights and bias
         self.weights_, self.bias_ = self._init_weights_and_bias(n_features, n_classes)
+
+        # Run optimization
+        self._optimize(X, y_one_hot)
+
+        return self
+
+    def _optimize(self, X, y_one_hot):
+        n_instances = X.shape[0]
 
         prev_loss = None  # For tracking loss over time
         for i in range(self.max_iter):
@@ -98,7 +106,6 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
             prev_loss = loss  # Update the previous loss with the current loss
 
         print("Training complete.")
-        return self
 
     def predict_proba(self, X):
         check_is_fitted(self)
