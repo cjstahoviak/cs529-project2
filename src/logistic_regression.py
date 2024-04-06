@@ -27,6 +27,16 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         exp_scores = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         return exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 
+    def _init_weights_and_bias(self, n_features, n_classes):
+        if self.weight_defaults == "zero":
+            return np.zeros((n_features, n_classes)), np.zeros(n_classes)
+        elif self.weight_defaults == "random":
+            return np.random.randn(n_features, n_classes), np.random.randn(n_classes)
+        else:
+            raise ValueError(
+                f"Invalid weight initialization: {self.weight_defaults}. Must be 'zero' or 'random'."
+            )
+
     def fit(self, X, y):
         # List hyper-paramters
         print("Training with:")
@@ -52,14 +62,7 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         self.label_to_original_ = {i: label for i, label in enumerate(self.classes_)}
 
         # TODO: Merge bias into weights
-        if self.weight_defaults == "zero":
-            self.weights_ = np.zeros((n_features, n_classes))
-            # self.weights_ = np.hstack([self.weights_, np.ones((X.shape[0], 1))])
-            self.bias_ = np.zeros(n_classes)
-        elif self.weight_defaults == "random":
-            self.weights_ = np.random.randn(n_features, n_classes)
-            # self.weights_ = np.hstack([self.weights_, np.ones((X.shape[0], 1))])
-            self.bias_ = np.random.randn(n_classes)
+        self.weights_, self.bias_ = self._init_weights_and_bias(n_features, n_classes)
 
         # Convert labels to one-hot encoding
         y_one_hot = np.zeros((n_instances, n_classes))
