@@ -4,44 +4,33 @@ from pathlib import Path
 
 import mlflow
 import pandas as pd
-from mlxtend.feature_selection import ColumnSelector
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from custom_transformers import ElementwiseSummaryStats, LibrosaTransformer
-
 # MLflow setup
 mlflow.set_tracking_uri("databricks")
 CURRENT_EXPERIMENT = mlflow.set_experiment("/cs529_project_2")
-mlflow.autolog(log_datasets=False, log_models=False, extra_tags={"current": True})
+mlflow.autolog(log_datasets=False, log_models=False)
 
 WIN_SIZE = 2048
 
 # Load data
 print("Loading data...")
-train_fpath = Path(
-    f"../data/processed/feature_extracted/train_features_{WIN_SIZE}.csv"
-).resolve()
-test_fpath = Path(
-    f"../data/processed/feature_extracted/test_features_{WIN_SIZE}.csv"
-).resolve()
+data_dir = Path("../data/processed/feature_extracted/pickle").resolve()
 
-train_df = pd.read_csv(train_fpath, header=[0, 1, 2], index_col=0)
-test_df = pd.read_csv(test_fpath, header=[0, 1, 2], index_col=0)
+train_df: pd.DataFrame = pd.read_pickle(data_dir / f"train_features_{WIN_SIZE}.pkl")
+X_test: pd.DataFrame = pd.read_pickle(data_dir / f"test_features_{WIN_SIZE}.pkl")
 
 X_train = train_df.drop(columns=["target"], level=0)
 y_train = train_df["target"].values.ravel()
-
-X_test = test_df
 
 # Define pipeline
 print("Creating pipeline...")
 pipe = Pipeline(
     [
-        # ("stat_selector", ColumnSelector(cols = (slice(None), slice(None), ))),
         ("scaler", StandardScaler()),
         ("pca", PCA()),
         (
@@ -60,7 +49,7 @@ param_grid = {
 gc = GridSearchCV(
     pipe,
     param_grid=param_grid,
-    n_jobs=-1,
+    n_jobs=-2,
     cv=StratifiedShuffleSplit(n_splits=5, random_state=42),
     verbose=2,
     pre_dispatch="n_jobs",  # Reduce memory consumption
@@ -68,7 +57,29 @@ gc = GridSearchCV(
 
 timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
+parent_run_id = None
+with mlflow.start_run(
+    run_name=f"sklearn_logreg_gridsearch_preprocessed_{timestamp}"
+) as parent_run:
+    parent_run_id = parent_run.info.run_id
+    mlflow.log_param("win_size", WIN_SIZE)
 
+    # Fit the model
+    gc.fit(X_train, y_train)
+
+    # Run best model on kaggle test data
+    y_pred = gc.best_estimator_.predict(X_test)
+    test_results = pd.DataFrame({"class": y_pred}, index=X_test.index)
+    test_results.index.name = "id"
+
+    # Save kaggle test results
+    kaggle_submission_fname = f"kaggle_submission_{timestamp}.csv"
+    test_results.to_csv(kaggle_submission_fname)
+    mlflow.log_artifact(kaggle_submission_fname)
+    os.remove(kaggle_submission_fname)
+
+
+# Define function to get child runs of a parent run
 def getChildRuns(run_id):
     experiment_ids = [CURRENT_EXPERIMENT.experiment_id]
     for potential_child_run in mlflow.search_runs(
@@ -79,25 +90,8 @@ def getChildRuns(run_id):
             yield potential_child_run
 
 
-parent_run_id = None
-with mlflow.start_run(
-    run_name=f"sklearn_logreg_gridsearch_preprocessed_{timestamp}"
-) as parent_run:
-    parent_run_id = parent_run.info.run_id
-    mlflow.log_param("win_size", WIN_SIZE)
-    gc.fit(X_train, y_train)
-
-    # Run best model on kaggle test data
-    y_pred = gc.best_estimator_.predict(X_test)
-    test_results = pd.DataFrame({"class": y_pred}, index=test_df.index)
-    test_results.index.name = "id"
-
-    kaggle_submission_fname = f"kaggle_submission_{timestamp}.csv"
-    test_results.to_csv(kaggle_submission_fname)
-    mlflow.log_artifact(kaggle_submission_fname)
-    os.remove(kaggle_submission_fname)
-
-
+# Save the WIN_SIZE parameter for each child run
+# It looks weird but this is the only way to save the parameter for each child run
 for child_run in getChildRuns(parent_run_id):
     with mlflow.start_run(run_id=child_run.info.run_id):
         mlflow.log_param("win_size", WIN_SIZE)
