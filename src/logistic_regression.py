@@ -6,11 +6,19 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 
 class SoftmaxRegression(BaseEstimator, ClassifierMixin):
-    def __init__(self, learning_rate=0.01, max_iter=1000):
+    def __init__(
+        self,
+        learning_rate=0.01,
+        max_iter=1000,
+        weight_defaults="zero",
+        temperature=1.0,
+        verbose=0,
+    ):
         self.learning_rate = learning_rate
         self.max_iter = max_iter
         self.weight_defaults = "zero"
         self.temperature = 1.0
+        self.verbose = 0  # Prints loss and loss-change
 
     def _softmax(self, logits):
         # TODO: Implement temperature hyperparameter
@@ -20,6 +28,13 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         return exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 
     def fit(self, X, y):
+        # List hyper-paramters
+        print("Training with:")
+        print(f"\tLearning rate: {self.learning_rate}")
+        print(f"\tMax iterations: {self.max_iter}")
+        print(f"\tWeight initialization: {self.weight_defaults}")
+        print(f"\tTemperature: {self.temperature}")
+
         # Convert X and y to numpy arrays if they are pandas DataFrames
         if isinstance(X, pd.DataFrame):
             X = X.values
@@ -39,9 +54,11 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         # TODO: Merge bias into weights
         if self.weight_defaults == "zero":
             self.weights_ = np.zeros((n_features, n_classes))
+            # self.weights_ = np.hstack([self.weights_, np.ones((X.shape[0], 1))])
             self.bias_ = np.zeros(n_classes)
         elif self.weight_defaults == "random":
             self.weights_ = np.random.randn(n_features, n_classes)
+            # self.weights_ = np.hstack([self.weights_, np.ones((X.shape[0], 1))])
             self.bias_ = np.random.randn(n_classes)
 
         # Convert labels to one-hot encoding
@@ -71,12 +88,12 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
                 prev_loss is not None
             ):  # Calculate and print change in loss if not the first iteration
                 loss_change = loss - prev_loss
-                if i % 100 == 0:
+                if i % 100 and self.verbose:
                     print(
                         f"Iteration {i:6}: Loss {loss:10.6f}, Change in Loss {loss_change:10.6f}"
                     )
             else:
-                if i % 100 == 0:
+                if i % 100 and self.verbose:
                     print(f"Iteration {i:6}: Loss {loss:10.6f}")
             prev_loss = loss  # Update the previous loss with the current loss
 
@@ -93,6 +110,7 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         return probabilities
 
     def predict(self, X):
+        # Select most probable class
         probabilities = self.predict_proba(X)
         integer_predictions = np.argmax(probabilities, axis=1)
 
