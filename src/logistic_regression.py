@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 
@@ -54,20 +55,16 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         # Validate input X and y are correctly sized
         X, y = check_X_y(X, y)
 
+        # Encode target labels
+        self.y_encoder_ = LabelBinarizer()
+        y_one_hot = self.y_encoder_.fit_transform(y)
+
+        self.classes_ = self.y_encoder_.classes_
         n_instances, n_features = X.shape
-        self.classes_ = np.unique(y)
         n_classes = len(self.classes_)
 
-        # TODO: Move under one-hot encoding
-        self.label_to_original_ = {i: label for i, label in enumerate(self.classes_)}
-
-        # TODO: Merge bias into weights
+        # Initialize weights and bias
         self.weights_, self.bias_ = self._init_weights_and_bias(n_features, n_classes)
-
-        # Convert labels to one-hot encoding
-        y_one_hot = np.zeros((n_instances, n_classes))
-        for i, c in enumerate(self.classes_):
-            y_one_hot[:, i] = y == c
 
         prev_loss = None  # For tracking loss over time
         for i in range(self.max_iter):
@@ -115,14 +112,7 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         # Select most probable class
         probabilities = self.predict_proba(X)
-        integer_predictions = np.argmax(probabilities, axis=1)
-
-        # Convert integer predictions back to original target names
-        original_predictions = np.vectorize(self.label_to_original_.get)(
-            integer_predictions
-        )
-
-        return original_predictions
+        return self.y_encoder_.inverse_transform(probabilities)
 
     def score(self, X, y):
         predictions = self.predict(X)
