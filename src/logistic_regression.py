@@ -73,6 +73,11 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
 
         return self
 
+    def _compute_probabilities(self, X):
+        logits = np.dot(X, self.weights_) + self.bias_
+        probabilities = self._softmax(logits)
+        return probabilities
+
     def _optimize(self, X, y_one_hot):
         n_instances = X.shape[0]
 
@@ -80,8 +85,7 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         current_iter = 0
 
         while current_iter < self.max_iter:
-            logits = np.dot(X, self.weights_) + self.bias_
-            probabilities = self._softmax(logits)
+            probabilities = self._compute_probabilities(X)
 
             # Compute gradients of loss function with respect to logits, weights and bias
             grad_logits = probabilities - y_one_hot
@@ -124,10 +128,8 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         check_is_fitted(self)
 
         X = check_array(X)
-        scores = np.dot(X, self.weights_) + self.bias_
-        probabilities = self._softmax(scores)
 
-        return probabilities
+        return self._compute_probabilities(X)
 
     def predict(self, X):
         # Select most probable class
