@@ -1,7 +1,8 @@
+from typing import Literal
+
 import librosa
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
 from pandas import Series
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
@@ -21,24 +22,21 @@ class ElementwiseSummaryStats(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        if self.desc_kw_args is None:
-            self.desc_kw_args = {}
+        data_dict = {}
 
-        res = []
+        for name, col in X.items():
+            stats = col.apply(lambda x: describe_as_df(x))
+            data_dict[name] = (
+                pd.concat(stats.to_dict(), axis=0).droplevel(1, axis=1).droplevel(1)
+            )
+            data_dict[name].drop(columns=["nobs"], axis=1, inplace=True)
 
-        for x_i in X.values() if hasattr(X, "values") else X:
-            res.append(describe_as_df(x_i, desc_kw_args=self.desc_kw_args))
+        return pd.concat(data_dict, axis=1)
 
-        output_df = pd.concat(res)
-
-        if hasattr(X, "keys"):
-            output_df.index = X.keys()
-        else:
-            output_df.reset_index(drop=True, inplace=True)
-
-        output_df.drop(("nobs", ""), axis=1, inplace=True)
-
-        return output_df
+    def set_output(
+        self, *, transform: None | Literal["default"] | Literal["pandas"] = None
+    ) -> BaseEstimator:
+        return self
 
 
 class ElementwiseTransformer(FunctionTransformer):
@@ -74,16 +72,19 @@ class LibrosaTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         func = self._get_librosa_func(self.feature)
 
-        extracted_features_list = Parallel(n_jobs=-1, backend="loky")(
-            delayed(func)(y=x, **self.kwargs) for x in X
-        )
+        if isinstance(X, pd.DataFrame):
+            if X.shape[1] == 1:
+                return self.transform(X.iloc[:, 0])
 
-        if hasattr(X, "keys"):
-            extracted_features = dict(zip(X.keys(), extracted_features_list))
+            x_dict = {k: self.transform(v) for k, v in X.items()}
+            X = pd.concat(x_dict, axis=1, keys=x_dict.keys())
+        elif isinstance(X, pd.Series):
+            X = X.apply(lambda x: func(y=x, **self.kwargs))
+            X = X.apply(lambda x: pd.Series(x.tolist())).rename(columns=lambda x: x + 1)
         else:
-            extracted_features = extracted_features_list
+            X = np.array([func(y=x, **self.kwargs) for x in X])
 
-        return extracted_features
+        return X
 
     def _get_librosa_func(self, feature):
         try:
@@ -108,4 +109,9 @@ class LibrosaTransformer(BaseEstimator, TransformerMixin):
             else:
                 self.kwargs[parameter] = value
 
+        return self
+
+    def set_output(
+        self, *, transform: None | Literal["default"] | Literal["pandas"] = None
+    ) -> BaseEstimator:
         return self
