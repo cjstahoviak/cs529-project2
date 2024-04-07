@@ -29,11 +29,12 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         # List hyper-paramters
-        print("Training with:")
-        print(f"\tLearning rate: {self.learning_rate}")
-        print(f"\tMax iterations: {self.max_iter}")
-        print(f"\tWeight initialization: {self.weight_defaults}")
-        print(f"\tTemperature: {self.temperature}")
+        if self.verbose:
+            print("Training with:")
+            print(f"\tLearning rate: {self.learning_rate}")
+            print(f"\tMax iterations: {self.max_iter}")
+            print(f"\tWeight initialization: {self.weight_defaults}")
+            print(f"\tTemperature: {self.temperature}")
 
         # Convert X and y to numpy arrays if they are pandas DataFrames
         if isinstance(X, pd.DataFrame):
@@ -41,8 +42,10 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         if isinstance(y, pd.Series):
             y = y.values
 
-        # Validate input X and y are correctly sized
-        X, y = check_X_y(X, y)
+        # Validate input X and y are correctly sized with bias term
+        # maybe _x_internal variable ?
+        X_with_bias = np.hstack([X, np.ones((X.shape[0], 1))])
+        X_with_bias, y = check_X_y(X, y)
 
         n_instances, n_features = X.shape
         self.classes_ = np.unique(y)
@@ -54,11 +57,9 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         # TODO: Merge bias into weights
         if self.weight_defaults == "zero":
             self.weights_ = np.zeros((n_features, n_classes))
-            # self.weights_ = np.hstack([self.weights_, np.ones((X.shape[0], 1))])
             self.bias_ = np.zeros(n_classes)
         elif self.weight_defaults == "random":
             self.weights_ = np.random.randn(n_features, n_classes)
-            # self.weights_ = np.hstack([self.weights_, np.ones((X.shape[0], 1))])
             self.bias_ = np.random.randn(n_classes)
 
         # Convert labels to one-hot encoding
@@ -97,10 +98,10 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
                     print(f"Iteration {i:6}: Loss {loss:10.6f}")
             prev_loss = loss  # Update the previous loss with the current loss
 
-        print("Training complete.")
         return self
 
     def predict_proba(self, X):
+        # X_with_bias = np.hstack([X, np.ones((X.shape[0], 1))])
         check_is_fitted(self)
 
         X = check_array(X)
@@ -110,6 +111,7 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         return probabilities
 
     def predict(self, X):
+
         # Select most probable class
         probabilities = self.predict_proba(X)
         integer_predictions = np.argmax(probabilities, axis=1)
