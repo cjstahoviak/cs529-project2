@@ -30,11 +30,12 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         exp_scores = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         return exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 
-    def _init_weights_and_bias(self, n_features, n_classes):
+    def _init_weights(self, n_features, n_classes):
+        shape = (n_features + 1, n_classes)
         if self.weight_defaults == "zero":
-            return np.zeros((n_features, n_classes)), np.zeros(n_classes)
+            return np.zeros(shape)
         elif self.weight_defaults == "random":
-            return np.random.randn(n_features, n_classes), np.random.randn(n_classes)
+            return np.random.randn(shape)
         else:
             raise ValueError(
                 f"Invalid weight initialization: {self.weight_defaults}. Must be 'zero' or 'random'."
@@ -60,14 +61,9 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         y_one_hot = self.y_encoder_.fit_transform(y)
 
         self.classes_ = self.y_encoder_.classes_
-        n_classes = len(self.classes_)
-        n_features = X.shape[1]
 
-        # Initialize weights and bias
-        self.weights_, self.bias_ = self._init_weights_and_bias(n_features, n_classes)
-
-        # Run optimization
-        self._optimize(X, y_one_hot)
+        # Optimize weights using gradient descent
+        self.weights_, self.bias_, self.loss_ = self._gd_optimize(X, y_one_hot)
 
         return self
 
@@ -76,54 +72,53 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         probabilities = self._softmax(logits)
         return probabilities
 
-    def _optimize(self, X, y_one_hot):
-        n_instances = X.shape[0]
+    def _compute_loss(self, probabilities, y_one_hot):
+        return -np.mean(np.sum(y_one_hot * np.log(probabilities + 1e-9), axis=1))
 
+    def _gd_optimize(self, X, y_one_hot):
+        n_instances, n_features = X.shape
+        n_classes = y_one_hot.shape[1]
+
+        X = np.c_[X, np.ones(n_instances)]  # Add bias term
+        weight = self._init_weights(n_features, n_classes)
+
+        loss_change = np.inf
         self.loss_ = []
         current_iter = 0
 
-        while current_iter < self.max_iter:
-            probabilities = self._compute_probabilities(X)
+        while current_iter < self.max_iter and self.tol < loss_change:
+            logits = np.dot(X, weight)
+            probabilities = self._softmax(logits)
 
-            # Compute gradients of loss function with respect to logits, weights and bias
-            grad_logits = probabilities - y_one_hot
-            grad_weights = (1 / n_instances) * np.dot(X.T, grad_logits)
-            grad_bias = (1 / n_instances) * np.sum(grad_logits, axis=0)
+            self.loss_.append(self._compute_loss(probabilities, y_one_hot))
 
-            # Update weights and bias
-            self.weights_ -= self.learning_rate * grad_weights
-            self.bias_ -= self.learning_rate * grad_bias
+            gradient = (1 / n_instances) * np.dot(X.T, probabilities - y_one_hot)
+
+            weight -= self.learning_rate * gradient
 
             # TODO: Implement learning rate decay
 
-            # Track loss and loss-change
-            current_loss = -np.mean(
-                np.sum(y_one_hot * np.log(probabilities + 1e-9), axis=1)
-            )
-
-            self.loss_.append(current_loss)
-
-            # Calculate and print change in loss if not the first iteration
             if current_iter > 0:
                 loss_change = self.loss_[current_iter - 1] - self.loss_[current_iter]
-                if current_iter % 100 and self.verbose:
-                    print(
-                        f"Iteration {current_iter:6}: Loss {self.loss_[current_iter]:10.6f}, Change in Loss {loss_change:10.6f}"
-                    )
-                if loss_change < self.tol:
-                    if self.verbose:
-                        print(f"Converged after {current_iter} iterations.")
-                    return
-            else:
-                if current_iter % 100 and self.verbose:
-                    print(
-                        f"Iteration {current_iter:6}: Loss {self.loss_[current_iter]:10.6f}"
-                    )
+
+            if (not (current_iter % 100)) and self.verbose:
+                print(
+                    f"Iteration {current_iter:6}: Loss {self.loss_[current_iter]:10.6f}, Change in Loss {loss_change:10.6f}"
+                )
 
             current_iter += 1
 
         if self.verbose:
-            print("Maximum number of iterations reached.")
+            if current_iter == self.max_iter:
+                print(
+                    f"Optimization stopped after reaching the maximum number of iterations. Final loss: {self.loss_[-1]}"
+                )
+            else:
+                print(
+                    f"Optimization converged in {current_iter} iterations. Final loss: {self.loss_[-1]}"
+                )
+
+        return weight[:-1, :], weight[-1, :], self.loss_
 
     def predict_proba(self, X):
         check_is_fitted(self)
