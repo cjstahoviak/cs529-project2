@@ -79,7 +79,7 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
     def _optimize(self, X, y_one_hot):
         n_instances = X.shape[0]
 
-        loss = []
+        self.loss_ = []
         current_iter = 0
 
         while current_iter < self.max_iter:
@@ -100,14 +100,15 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
             current_loss = -np.mean(
                 np.sum(y_one_hot * np.log(probabilities + 1e-9), axis=1)
             )
-            loss.append(current_loss)
+
+            self.loss_.append(current_loss)
 
             # Calculate and print change in loss if not the first iteration
             if current_iter > 0:
-                loss_change = loss[current_iter - 1] - loss[current_iter]
+                loss_change = self.loss_[current_iter - 1] - self.loss_[current_iter]
                 if current_iter % 100 and self.verbose:
                     print(
-                        f"Iteration {current_iter:6}: Loss {loss:10.6f}, Change in Loss {loss_change:10.6f}"
+                        f"Iteration {current_iter:6}: Loss {self.loss_[current_iter]:10.6f}, Change in Loss {loss_change:10.6f}"
                     )
                 if loss_change < self.tol:
                     if self.verbose:
@@ -115,7 +116,9 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
                     return
             else:
                 if current_iter % 100 and self.verbose:
-                    print(f"Iteration {current_iter:6}: Loss {loss:10.6f}")
+                    print(
+                        f"Iteration {current_iter:6}: Loss {self.loss_[current_iter]:10.6f}"
+                    )
 
             current_iter += 1
 
