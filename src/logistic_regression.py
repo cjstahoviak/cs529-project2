@@ -41,12 +41,10 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
             )
 
     def fit(self, X, y):
-        # List hyper-paramters
-        print("Training with:")
-        print(f"\tLearning rate: {self.learning_rate}")
-        print(f"\tMax iterations: {self.max_iter}")
-        print(f"\tWeight initialization: {self.weight_defaults}")
-        print(f"\tTemperature: {self.temperature}")
+
+        if self.verbose:
+            print("Fitting Softmax Regression model...")
+            print(self.get_params())
 
         # Convert X and y to numpy arrays if they are pandas DataFrames
         if isinstance(X, pd.DataFrame):
