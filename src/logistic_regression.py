@@ -12,7 +12,7 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         learning_rate=0.01,
         max_iter=1000,
         weight_defaults="zero",
-        regularization="l2",
+        regularization=None,
         lam=1,
         temperature=1.0,
         verbose=0,
