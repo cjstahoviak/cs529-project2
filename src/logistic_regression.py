@@ -12,6 +12,8 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         learning_rate=0.01,
         max_iter=1000,
         weight_defaults="zero",
+        regularization="l2",
+        lam=1,
         temperature=1.0,
         verbose=0,
         tol=1e-4,
@@ -22,6 +24,8 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         self.temperature = temperature
         self.verbose = verbose  # Prints loss and loss-change
         self.tol = tol
+        self.regularization = regularization
+        self.lam = lam
 
     def _softmax(self, logits):
         # TODO: Implement temperature hyperparameter
@@ -75,6 +79,33 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
     def _compute_loss(self, probabilities, y_one_hot):
         return -np.mean(np.sum(y_one_hot * np.log(probabilities + 1e-9), axis=1))
 
+    def _regularization_loss_term(self, weight):
+        if self.lam == 0 or self.regularization is None:
+            return 0
+        elif self.regularization == "l1":
+            return self.lam * np.sum(np.abs(weight[:-1]))
+        elif self.regularization == "l2":
+            return self.lam * np.sum(weight[:-1] ** 2)
+        else:
+            raise ValueError(
+                f"Invalid regularization: {self.regularization}. Must be 'l1' or 'l2' or none."
+            )
+
+    def _regularization_gradient_term(self, weight):
+        n_classes = weight.shape[1]
+        if self.lam == 0 or self.regularization is None:
+            return 0
+        elif self.regularization == "l1":
+            return np.vstack(
+                [self.lam * np.sign(weight[:-1]), np.zeros((1, n_classes))]
+            )
+        elif self.regularization == "l2":
+            return 2 * self.lam * np.vstack([weight[:-1], np.zeros((1, n_classes))])
+        else:
+            raise ValueError(
+                f"Invalid regularization: {self.regularization}. Must be 'l1' or 'l2' or none."
+            )
+
     def _gd_optimize(self, X, y_one_hot):
         n_instances, n_features = X.shape
         n_classes = y_one_hot.shape[1]
@@ -90,9 +121,14 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
             logits = np.dot(X, weight)
             probabilities = self._softmax(logits)
 
-            self.loss_.append(self._compute_loss(probabilities, y_one_hot))
+            self.loss_.append(
+                self._compute_loss(probabilities, y_one_hot)
+                + self._regularization_loss_term(weight)
+            )
 
-            gradient = (1 / n_instances) * np.dot(X.T, probabilities - y_one_hot)
+            gradient = (1 / n_instances) * np.dot(
+                X.T, probabilities - y_one_hot
+            ) + self._regularization_gradient_term(weight)
 
             weight -= self.learning_rate * gradient
 
