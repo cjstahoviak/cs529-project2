@@ -18,9 +18,9 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
     ):
         self.learning_rate = learning_rate
         self.max_iter = max_iter
-        self.weight_defaults = "zero"
-        self.temperature = 1.0
-        self.verbose = 0  # Prints loss and loss-change
+        self.weight_defaults = weight_defaults
+        self.temperature = temperature
+        self.verbose = verbose  # Prints loss and loss-change
         self.tol = tol
 
     def _softmax(self, logits):
