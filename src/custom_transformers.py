@@ -115,3 +115,24 @@ class LibrosaTransformer(BaseEstimator, TransformerMixin):
         self, *, transform: None | Literal["default"] | Literal["pandas"] = None
     ) -> BaseEstimator:
         return self
+
+
+class WindowSelector(BaseEstimator, TransformerMixin):
+    """Constructs a transformer which selects a window of a given size from the input."""
+
+    def __init__(self, win_size: int = 2048):
+        self.win_size = win_size
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        if isinstance(X, pd.DataFrame):
+            if self.win_size == "all":
+                return X
+            else:
+                return X.loc[:, self.win_size]
+        else:
+            raise ValueError("Input must be a DataFrame.")
+
+        return X
