@@ -1,3 +1,4 @@
+import os
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -5,16 +6,12 @@ from pathlib import Path
 import mlflow
 import pandas as pd
 from sklearn.decomposition import PCA
-from sklearn.model_selection import (
-    GridSearchCV,
-    StratifiedShuffleSplit,
-)
+from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from custom_transformers import WindowSelector
 from logistic_regression import SoftmaxRegression
-import os
 
 N_JOBS = os.cpu_count() * 2
 EXPERIMENT_NAME = "/cs529_project_2_softmax_gridsearch"
@@ -141,7 +138,9 @@ def main():
 
         # Save kaggle test results
         with tempfile.TemporaryDirectory() as tmpdir:
-            kaggle_submission_fname = Path(tmpdir) / f"kaggle_submission_{timestamp}.csv"
+            kaggle_submission_fname = (
+                Path(tmpdir) / f"kaggle_submission_{timestamp}.csv"
+            )
             test_results.to_csv(kaggle_submission_fname)
             mlflow.log_artifact(kaggle_submission_fname)
 
