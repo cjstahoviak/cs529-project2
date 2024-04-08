@@ -10,15 +10,17 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
     def __init__(
         self,
         learning_rate=0.01,
+        learning_rate_decay=0.0,  # No decay by default
         max_iter=1000,
         weight_defaults="zero",
         regularization=None,
         lam=1,
-        temperature=1.0,
+        temperature=1.0,  # No temperature scaling by default
         verbose=0,
         tol=1e-4,
     ):
         self.learning_rate = learning_rate
+        self.learning_rate_decay = learning_rate_decay
         self.max_iter = max_iter
         self.weight_defaults = weight_defaults
         self.temperature = temperature
@@ -26,6 +28,7 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         self.tol = tol
         self.regularization = regularization
         self.lam = lam
+        self.initial_learning_rate = learning_rate
 
     def _softmax(self, logits):
         # Normalization: Subtract the maximum value from the logits to prevent overflow/underflow
@@ -134,7 +137,10 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
 
             weight -= self.learning_rate * gradient
 
-            # TODO: Implement learning rate decay
+            # Calculate the updated learning rate
+            self.learning_rate = self.initial_learning_rate / (
+                1 + self.learning_rate_decay * current_iter
+            )
 
             if current_iter > 0:
                 loss_change = self.loss_[current_iter - 1] - self.loss_[current_iter]

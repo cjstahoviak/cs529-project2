@@ -32,8 +32,9 @@ softmax_pipe = Pipeline(
         (
             "softmaxreg",
             SoftmaxRegression(
-                learning_rate=0.0001,
-                max_iter=1_000,
+                learning_rate=0.01,
+                learning_rate_decay=0.0,
+                max_iter=10_000,
                 weight_defaults="zero",
                 temperature=1.0,
             ),
