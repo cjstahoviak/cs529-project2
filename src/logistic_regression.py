@@ -28,10 +28,10 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         self.lam = lam
 
     def _softmax(self, logits):
-        # TODO: Implement temperature hyperparameter
-
-        # Subtract the maximum value from the logits to prevent overflow
-        exp_scores = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+        # Normalization: Subtract the maximum value from the logits to prevent overflow/underflow
+        exp_scores = (
+            np.exp((logits - np.max(logits, axis=1, keepdims=True))) / self.temperature
+        )
         return exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 
     def _init_weights(self, n_features, n_classes):

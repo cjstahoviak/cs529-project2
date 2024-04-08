@@ -25,7 +25,7 @@ print("Total features in X_train: " + str(X_train.shape[1]))
 print("Total instances in X_train: " + str(X_train.shape[0]))
 # print("First element: " + str(X_train.iloc[0, 0]))
 
-pipe = Pipeline(
+softmax_pipe = Pipeline(
     [
         ("scaler", StandardScaler()),
         ("pca", PCA(n_components=0.95)),
@@ -40,28 +40,7 @@ pipe = Pipeline(
         ),
     ]
 )
-pipe.fit(X_train, y_train)
-y_pred = pipe.predict(X_test)
-accuracy = pipe.score(X_test, y_test)
+softmax_pipe.fit(X_train, y_train)
+y_pred = softmax_pipe.predict(X_test)
+accuracy = softmax_pipe.score(X_test, y_test)
 print(f"Accuracy: {accuracy}")
-
-# Fit model
-# sr = SoftmaxRegression(
-#     learning_rate=0.0001, max_iter=10_000, weight_defaults="zero", temperature=1.0
-# )
-# sr.fit(X_train, y_train)
-
-# # Print accuracy
-# accuracy = sr.score(X_test, y_test)
-# print(f"Our Accuracy: {accuracy}")
-
-# from sklearn.linear_model import LogisticRegression
-
-# lr = LogisticRegression(
-#     penalty=None, max_iter=1_000, solver="saga", multi_class="multinomial", verbose=0
-# )
-# lr.fit(X_train, y_train)
-
-# # Print accuracy
-# accuracy = lr.score(X_test, y_test)
-# print(f"Sklearn Accuracy: {accuracy}")
