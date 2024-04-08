@@ -1,29 +1,22 @@
 import tempfile
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from copy import copy
 from datetime import datetime
 from pathlib import Path
 
-import matplotlib
-import matplotlib.pyplot as plt
 import mlflow
-import numpy as np
 import pandas as pd
-import pca
 from sklearn.decomposition import PCA
-from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.model_selection import (
-    ParameterGrid,
+    GridSearchCV,
     StratifiedShuffleSplit,
-    cross_validate,
 )
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from tqdm import tqdm
 
 from custom_transformers import WindowSelector
 from logistic_regression import SoftmaxRegression
+import os
 
+N_JOBS = os.cpu_count() * 2
 EXPERIMENT_NAME = "/cs529_project_2_softmax_gridsearch"
 DATA_FOLDER_PATH = Path("../data/processed/feature_extracted/pickle").resolve()
 WIN_SIZES = [1024, 2048, 4096, 8192]
@@ -67,105 +60,11 @@ def load_data():
     return X_train, y_train, X_test
 
 
-def log_pca_plots(pipe, X_train, y_train, params):
-    # Fit the PPCA model
-    # This is a little hacky, since we are using the pipeline to preprocess the data
-    # and then fitting the PPCA model on the preprocessed data
-    # the ppca model has plot methods that require the original data
-    ppca = pca.pca(params["pca__n_components"], verbose=0)
-    win_data = pipe.named_steps["win_selector"].transform(X_train)
-    preprocessed_data = pipe.named_steps["scaler"].transform(win_data)
-    column_labels = ["_".join(map(str, col)) for col in win_data.columns]
-    ppca.fit_transform(preprocessed_data, row_labels=y_train, col_labels=column_labels)
-
-    exp_var_plot, _ = ppca.plot(20)
-    biplot, _ = ppca.biplot(labels=y_train, n_feat=10, PC=[0, 1])
-
-    # Save to mlflow
-    mlflow.log_figure(biplot, "biplot.png")
-    mlflow.log_figure(exp_var_plot, "explained_variance.png")
-
-
-def log_kaggle_submission(pipe, X_test, timestamp):
-    # Predict kaggle data
-    y_pred = pipe.predict(X_test)
-
-    # Build required format
-    test_results = pd.DataFrame({"class": y_pred}, index=X_test.index)
-    test_results.index.name = "id"
-    kaggle_submission_fname = f"kaggle_submission_{timestamp}.csv"
-
-    # Save and log
-    with tempfile.TemporaryDirectory() as temp_dir:
-        kaggle_submission_fname = Path(temp_dir) / kaggle_submission_fname
-        test_results.to_csv(kaggle_submission_fname)
-        mlflow.log_artifact(kaggle_submission_fname)
-
-
-def log_confusion_matrix(pipe, X_train, y_train):
-    with matplotlib.rc_context(
-        {
-            "font.size": min(8.0, 50.0 / len(pipe.classes_)),
-            "axes.labelsize": 8.0,
-            "figure.dpi": 175,
-        }
-    ):
-        disp = ConfusionMatrixDisplay.from_estimator(
-            pipe, X_train, y_train, labels=pipe.classes_, normalize="true", cmap="Blues"
-        )
-
-        disp.ax_.set_title("Normalized Confusion Matrix")
-
-        mlflow.log_figure(disp.figure_, "confusion_matrix.png")
-
-
-def run_model(params, pipe: Pipeline, X_train, y_train, X_test):
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    with mlflow.start_run(run_name=f"softmax_gridsearch_{timestamp}") as run:
-        cv = StratifiedShuffleSplit(n_splits=5, random_state=42)
-        local_pipe = copy(pipe)
-        mlflow.log_params(params)
-        local_pipe.set_params(**params)
-        scores = cross_validate(
-            pipe,
-            X_train,
-            y_train,
-            cv=cv,
-            n_jobs=-2,
-            verbose=0,
-            return_train_score=True,
-        )
-
-        for key, value in scores.items():
-            mlflow.log_metric(f"{key}_mean", value.mean())
-            mlflow.log_metric(f"{key}_std", value.std())
-            for i, val in enumerate(value):
-                mlflow.log_metric(f"{key}_{i}", val)
-
-        # Fit on all data
-        start = datetime.now()
-        pipe.fit(X_train, y_train)
-        end = datetime.now()
-        mlflow.log_metric("full_train_time", (end - start).total_seconds())
-
-        # Log the final trained accuracy and loss
-        mlflow.log_metric("full_train_accuracy", pipe.score(X_train, y_train))
-        full_loss = np.array(pipe.named_steps["logreg"].loss_)
-        mlflow.log_metric("full_train_final_loss", full_loss[-1])
-        mlflow.log_metric("n_iterations", len(full_loss))
-        # mlflow.log_table(pd.DataFrame(full_loss, columns=["loss"]), "loss.json")
-
-        # Log some plots
-        log_confusion_matrix(pipe, X_train, y_train)
-        # log_pca_plots(pipe, X_train, y_train, params)
-        log_kaggle_submission(pipe, X_test, timestamp)
-        plt.close("all")
-
-
 def main():
     # MLflow setup
     mlflow.set_tracking_uri("databricks")
     mlflow.set_experiment(EXPERIMENT_NAME)
+    mlflow.autolog(log_datasets=False, log_models=False)
 
     # Load data
     print("Loading data...")
@@ -193,12 +92,12 @@ def main():
     )
 
     # Create parameter grids to search over
-    lambda_values = [0.01, 0.1, 1, 10]
-    tolerance_values = [1e-4, 1e-8, 1e-16]
+    lambda_values = [0.01, 0.1, 0.05, 1]
+    tolerance_values = [1e-4, 1e-8]
 
     base_param_grid = {
-        "win_selector__win_size": WIN_SIZES + ["all"],
-        "pca__n_components": [20, 0.80, 0.9, 0.99],
+        "win_selector__win_size": WIN_SIZES,
+        "pca__n_components": [0.80, 0.99],
         "logreg__tol": tolerance_values,
     }
 
@@ -211,27 +110,40 @@ def main():
         "logreg__regularization": [None],
     }
 
-    param_grids = list(
-        ParameterGrid({**base_param_grid, **no_regularization_grid})
-    ) + list(ParameterGrid({**base_param_grid, **regularization_grid}))
+    param_grids = [
+        {**base_param_grid, **no_regularization_grid},
+        {**base_param_grid, **regularization_grid},
+    ]
 
     # Run grid search
     N_SPLITS = 5
-    n_params = len(param_grids)
-    print(f"Starting grid search...")
-    print(f"n_params: {n_params}, n_splits: {N_SPLITS}")
-    print(f"Total number of runs: {n_params * N_SPLITS}")
 
-    MAX_WORKERS = 8
+    gc = GridSearchCV(
+        pipe,
+        param_grid=param_grids,
+        n_jobs=N_JOBS,
+        cv=StratifiedShuffleSplit(n_splits=N_SPLITS, random_state=42),
+        verbose=2,
+        pre_dispatch="n_jobs",  # Reduce memory consumption
+    )
 
-    with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = [
-            executor.submit(run_model, params, pipe, X_train, y_train, X_test)
-            for params in param_grids
-        ]
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-        for future in as_completed(futures):
-            future.result()
+    with mlflow.start_run(run_name=f"softmax_gridsearch_{timestamp}"):
+
+        # Fit the model
+        gc.fit(X_train, y_train)
+
+        # Run best model on kaggle test data
+        y_pred = gc.best_estimator_.predict(X_test)
+        test_results = pd.DataFrame({"class": y_pred}, index=X_test.index)
+        test_results.index.name = "id"
+
+        # Save kaggle test results
+        with tempfile.TemporaryDirectory() as tmpdir:
+            kaggle_submission_fname = Path(tmpdir) / f"kaggle_submission_{timestamp}.csv"
+            test_results.to_csv(kaggle_submission_fname)
+            mlflow.log_artifact(kaggle_submission_fname)
 
 
 if __name__ == "__main__":
