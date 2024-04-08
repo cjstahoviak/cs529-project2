@@ -21,4 +21,5 @@ repos:
     hooks:
       - id: isort
         name: isort (python)
+        args: ["--profile", "black", "--filter-files"]
 exclude: "reports/.*|data/.*|docs/.*|README.md"
