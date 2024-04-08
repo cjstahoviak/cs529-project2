@@ -60,11 +60,6 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         if isinstance(y, pd.Series):
             y = y.values
 
-        # Validate input X and y are correctly sized with bias term
-        # maybe _x_internal variable ?
-        X_with_bias = np.hstack([X, np.ones((X.shape[0], 1))])
-        X_with_bias, y = check_X_y(X, y)
-
         # Encode target labels
         self.y_encoder_ = LabelBinarizer()
         y_one_hot = self.y_encoder_.fit_transform(y)
