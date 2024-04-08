@@ -1,4 +1,6 @@
 import tempfile
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from copy import copy
 from datetime import datetime
 from pathlib import Path
 
@@ -117,6 +119,49 @@ def log_confusion_matrix(pipe, X_train, y_train):
         mlflow.log_figure(disp.figure_, "confusion_matrix.png")
 
 
+def run_model(params, pipe: Pipeline, X_train, y_train, X_test):
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    with mlflow.start_run(run_name=f"softmax_gridsearch_{timestamp}") as run:
+        cv = StratifiedShuffleSplit(n_splits=5, random_state=42)
+        local_pipe = copy(pipe)
+        mlflow.log_params(params)
+        local_pipe.set_params(**params)
+        scores = cross_validate(
+            pipe,
+            X_train,
+            y_train,
+            cv=cv,
+            n_jobs=-2,
+            verbose=0,
+            return_train_score=True,
+        )
+
+        for key, value in scores.items():
+            mlflow.log_metric(f"{key}_mean", value.mean())
+            mlflow.log_metric(f"{key}_std", value.std())
+            for i, val in enumerate(value):
+                mlflow.log_metric(f"{key}_{i}", val)
+
+        # Fit on all data
+        start = datetime.now()
+        pipe.fit(X_train, y_train)
+        end = datetime.now()
+        mlflow.log_metric("full_train_time", (end - start).total_seconds())
+
+        # Log the final trained accuracy and loss
+        mlflow.log_metric("full_train_accuracy", pipe.score(X_train, y_train))
+        full_loss = np.array(pipe.named_steps["logreg"].loss_)
+        mlflow.log_metric("full_train_final_loss", full_loss[-1])
+        mlflow.log_metric("n_iterations", len(full_loss))
+        # mlflow.log_table(pd.DataFrame(full_loss, columns=["loss"]), "loss.json")
+
+        # Log some plots
+        log_confusion_matrix(pipe, X_train, y_train)
+        # log_pca_plots(pipe, X_train, y_train, params)
+        log_kaggle_submission(pipe, X_test, timestamp)
+        plt.close("all")
+
+
 def main():
     # MLflow setup
     mlflow.set_tracking_uri("databricks")
@@ -176,46 +221,17 @@ def main():
     print(f"Starting grid search...")
     print(f"n_params: {n_params}, n_splits: {N_SPLITS}")
     print(f"Total number of runs: {n_params * N_SPLITS}")
-    for params in tqdm(param_grids, "Running gridsearch"):
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        with mlflow.start_run(run_name=f"softmax_gridsearch_{timestamp}") as run:
-            cv = StratifiedShuffleSplit(n_splits=5, random_state=42)
-            mlflow.log_params(params)
-            pipe.set_params(**params)
-            scores = cross_validate(
-                pipe,
-                X_train,
-                y_train,
-                cv=cv,
-                n_jobs=-2,
-                verbose=0,
-                return_train_score=True,
-            )
 
-            for key, value in scores.items():
-                mlflow.log_metric(f"{key}_mean", value.mean())
-                mlflow.log_metric(f"{key}_std", value.std())
-                for i, val in enumerate(value):
-                    mlflow.log_metric(f"{key}_{i}", val)
+    MAX_WORKERS = 8
 
-            # Fit on all data
-            start = datetime.now()
-            pipe.fit(X_train, y_train)
-            end = datetime.now()
-            mlflow.log_metric("full_train_time", (end - start).total_seconds())
+    with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = [
+            executor.submit(run_model, params, pipe, X_train, y_train, X_test)
+            for params in param_grids
+        ]
 
-            # Log the final trained accuracy and loss
-            mlflow.log_metric("full_train_accuracy", pipe.score(X_train, y_train))
-            full_loss = np.array(pipe.named_steps["logreg"].loss_)
-            mlflow.log_metric("full_train_final_loss", full_loss[-1])
-            mlflow.log_metric("n_iterations", len(full_loss))
-            # mlflow.log_table(pd.DataFrame(full_loss, columns=["loss"]), "loss.json")
-
-            # Log some plots
-            log_confusion_matrix(pipe, X_train, y_train)
-            # log_pca_plots(pipe, X_train, y_train, params)
-            log_kaggle_submission(pipe, X_test, timestamp)
-            plt.close("all")
+        for future in as_completed(futures):
+            future.result()
 
 
 if __name__ == "__main__":
