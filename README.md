@@ -13,7 +13,7 @@ conda activate cs529_proj2
 Run scripts to generate feature-extracted data:
 ```bash
 cd src/
-python src/pickle_data.py
+python pickle_data.py
 python ../experiments/feature_extraction.py
 ```
 Run the source code to generate a model...
