@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 
 from logistic_regression import SoftmaxRegression
 
+# Load data
 train_features_fpath = Path(
     "../data/processed/feature_extracted/train_features_2048.csv"
 ).resolve()
@@ -25,6 +26,7 @@ print("Total features in X_train: " + str(X_train.shape[1]))
 print("Total instances in X_train: " + str(X_train.shape[0]))
 # print("First element: " + str(X_train.iloc[0, 0]))
 
+# Define pipeline and score
 softmax_pipe = Pipeline(
     [
         ("scaler", StandardScaler()),

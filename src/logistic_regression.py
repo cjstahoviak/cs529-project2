@@ -31,6 +31,15 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         self.initial_learning_rate = learning_rate
 
     def _softmax(self, logits):
+        """
+        Compute the softmax function for the given logits.
+
+        Parameters:
+        - logits: numpy array of shape (n_samples, n_classes)
+
+        Returns:
+        - probabilities: numpy array of shape (n_samples, n_classes)
+        """
         # Normalization: Subtract the maximum value from the logits to prevent overflow/underflow
         exp_scores = (
             np.exp((logits - np.max(logits, axis=1, keepdims=True))) / self.temperature
@@ -38,6 +47,16 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         return exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 
     def _init_weights(self, n_features, n_classes):
+        """
+        Initialize the weights for the softmax regression model.
+
+        Parameters:
+        - n_features: int, the number of input features
+        - n_classes: int, the number of output classes
+
+        Returns:
+        - weights: numpy array of shape (n_features + 1, n_classes), the initialized weights
+        """
         shape = (n_features + 1, n_classes)
         if self.weight_defaults == "zero":
             return np.zeros(shape)
@@ -49,6 +68,16 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
             )
 
     def fit(self, X, y):
+        """
+        Fit the Softmax Regression model to the training data.
+
+        Parameters:
+        - X: numpy array or pandas DataFrame, the input features
+        - y: numpy array or pandas Series, the target labels
+
+        Returns:
+        - self: fitted Softmax Regression model
+        """
 
         if self.verbose:
             print("Fitting Softmax Regression model...")
@@ -72,14 +101,42 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         return self
 
     def _compute_probabilities(self, X):
+        """
+        Compute the probabilities for each class given the input features.
+
+        Parameters:
+        - X: numpy array or pandas DataFrame, the input features
+
+        Returns:
+        - probabilities: numpy array of shape (n_samples, n_classes), the class probabilities
+        """
         logits = np.dot(X, self.weights_) + self.bias_
         probabilities = self._softmax(logits)
         return probabilities
 
     def _compute_loss(self, probabilities, y_one_hot):
+        """
+        Compute the loss function for the Softmax Regression model.
+
+        Parameters:
+        - probabilities: numpy array of shape (n_samples, n_classes), the class probabilities
+        - y_one_hot: numpy array of shape (n_samples, n_classes), the one-hot encoded target labels
+
+        Returns:
+        - loss: float, the computed loss
+        """
         return -np.mean(np.sum(y_one_hot * np.log(probabilities + 1e-9), axis=1))
 
     def _regularization_loss_term(self, weight):
+        """
+        Compute the regularization loss term for the Softmax Regression model.
+
+        Parameters:
+        - weight: numpy array of shape (n_features + 1, n_classes), the weights
+
+        Returns:
+        - loss_term: float, the computed regularization loss term
+        """
         if self.lam == 0 or self.regularization is None:
             return 0
         elif self.regularization == "l1":
@@ -92,6 +149,15 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
             )
 
     def _regularization_gradient_term(self, weight):
+        """
+        Compute the regularization gradient term for the Softmax Regression model.
+
+        Parameters:
+        - weight: numpy array of shape (n_features + 1, n_classes), the weights
+
+        Returns:
+        - gradient_term: numpy array of shape (n_features + 1, n_classes), the computed regularization gradient term
+        """
         n_classes = weight.shape[1]
         if self.lam == 0 or self.regularization is None:
             return 0
@@ -107,6 +173,18 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
             )
 
     def _gd_optimize(self, X, y_one_hot):
+        """
+        Optimize weights using gradient descent.
+
+        Parameters:
+        - X: numpy array or pandas DataFrame, the input features
+        - y_one_hot: numpy array of shape (n_samples, n_classes), the one-hot encoded target labels
+
+        Returns:
+        - weights: numpy array of shape (n_features, n_classes), the optimized weights
+        - bias: numpy array of shape (1, n_classes), the optimized bias
+        - loss: list, the loss values during optimization
+        """
         n_instances, n_features = X.shape
         n_classes = y_one_hot.shape[1]
 
@@ -160,19 +238,42 @@ class SoftmaxRegression(BaseEstimator, ClassifierMixin):
         return weight[:-1, :], weight[-1, :], self.loss_
 
     def predict_proba(self, X):
-        # X_with_bias = np.hstack([X, np.ones((X.shape[0], 1))])
+        """
+        Compute the class probabilities for the input features.
+
+        Parameters:
+        - X: numpy array or pandas DataFrame, the input features
+
+        Returns:
+        - probabilities: numpy array of shape (n_samples, n_classes), the class probabilities
+        """
         check_is_fitted(self)
-
         X = check_array(X)
-
         return self._compute_probabilities(X)
 
     def predict(self, X):
+        """
+        Predict the class labels for the input features.
 
-        # Select most probable class
+        Parameters:
+        - X: numpy array or pandas DataFrame, the input features
+
+        Returns:
+        - predictions: numpy array, the predicted class labels
+        """
         probabilities = self.predict_proba(X)
         return self.y_encoder_.inverse_transform(probabilities)
 
     def score(self, X, y):
+        """
+        Compute the accuracy score of the model on the given test data.
+
+        Parameters:
+        - X: numpy array or pandas DataFrame, the input features
+        - y: numpy array or pandas Series, the target labels
+
+        Returns:
+        - score: float, the accuracy score
+        """
         predictions = self.predict(X)
         return accuracy_score(y, predictions)

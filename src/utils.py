@@ -6,10 +6,27 @@ from scipy.stats import describe
 
 
 def get_genre_from_path(path: Path):
+    """Extracts the genre from the given file path.
+
+    Args:
+        path (Path): The file path.
+
+    Returns:
+        str: The genre extracted from the file path.
+    """
     return path.parts[-2]
 
 
 def load_audio_files(data_dir: Path):
+    """
+    Load audio files from the given directory.
+
+    Args:
+        data_dir (Path): The directory containing the audio files.
+
+    Returns:
+        Tuple[List[np.ndarray], List[str]]: A tuple containing the audio data and their corresponding targets.
+    """
     audio_files = list(data_dir.glob("**/*.au"))
 
     targets = [get_genre_from_path(file) for file in audio_files]
@@ -19,6 +36,15 @@ def load_audio_files(data_dir: Path):
 
 
 def load_audio_to_df(data_dir: Path):
+    """
+    Load audio files from the given directory and convert them to a DataFrame.
+
+    Args:
+        data_dir (Path): The directory containing the audio files.
+
+    Returns:
+        DataFrame: A DataFrame containing the audio data, their corresponding targets, and sample rates.
+    """
     audio_dict = {}
 
     for file in list(data_dir.glob("**/*.au")):

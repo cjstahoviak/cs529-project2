@@ -19,6 +19,16 @@ DATA_FOLDER_PATH = Path("../data/processed/feature_extracted/pickle").resolve()
 WIN_SIZES = [1024, 2048, 4096, 8192]
 
 
+"""
+Load data from pickle files.
+
+Returns:
+    X_train (pd.DataFrame): Training data.
+    y_train (np.ndarray): Training labels.
+    X_test (pd.DataFrame): Test data.
+"""
+
+
 def load_data():
     train_dict = {}
     test_dict = {}

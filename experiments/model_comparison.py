@@ -23,6 +23,14 @@ WIN_SIZES = [1024, 2048, 4096, 8192]
 
 
 def load_data():
+    """
+    Load the training and testing data from pickle files.
+
+    Returns:
+        X_train (pd.DataFrame): Training data features.
+        y_train (np.ndarray): Training data target.
+        X_test (pd.DataFrame): Testing data features.
+    """
     train_dict = {}
     test_dict = {}
 
