@@ -7,6 +7,69 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 
 class SoftmaxRegression(BaseEstimator, ClassifierMixin):
+    """
+    Logistic regression model for multi-class classification. Inheriting from scikit-learn's BaseEstimator and ClassifierMixin classes.
+
+    Parameters:
+    - learning_rate: float, the learning rate for gradient descent (default=0.01)
+    - learning_rate_decay: float, the learning rate decay factor (default=0.0)
+    - max_iter: int, the maximum number of iterations for optimization (default=1000)
+    - weight_defaults: str, the weight initialization method ("zero" or "random") (default="zero")
+    - regularization: str, the type of regularization ("l1", "l2", or None) (default=None)
+    - lam: float, the regularization parameter (default=1)
+    - temperature: float, the temperature scaling factor (default=1.0)
+    - verbose: int, the verbosity level (0 for no output, 1 for loss and loss-change) (default=0)
+    - tol: float, the tolerance for convergence (default=1e-4)
+
+    Attributes:
+    - learning_rate: float, the learning rate for gradient descent
+    - learning_rate_decay: float, the learning rate decay factor
+    - max_iter: int, the maximum number of iterations for optimization
+    - weight_defaults: str, the weight initialization method
+    - temperature: float, the temperature scaling factor
+    - verbose: int, the verbosity level
+    - tol: float, the tolerance for convergence
+    - regularization: str, the type of regularization
+    - lam: float, the regularization parameter
+    - initial_learning_rate: float, the initial learning rate
+    - y_encoder_: LabelBinarizer, the label binarizer for encoding target labels
+    - classes_: numpy array, the unique classes in the target labels
+    - weights_: numpy array, the optimized weights
+    - bias_: numpy array, the optimized bias
+    - loss_: list, the loss values during optimization
+
+    Methods:
+    - fit(X, y): Fit the Softmax Regression model to the training data
+    - predict_proba(X): Compute the class probabilities for the input features
+    - predict(X): Predict the class labels for the input features
+    - score(X, y): Compute the accuracy score of the model on the given test data
+    """
+
+    def __init__(
+        self,
+        learning_rate=0.01,
+        learning_rate_decay=0.0,  # No decay by default
+        max_iter=1000,
+        weight_defaults="zero",
+        regularization=None,
+        lam=1,
+        temperature=1.0,  # No temperature scaling by default
+        verbose=0,
+        tol=1e-4,
+    ):
+        self.learning_rate = learning_rate
+        self.learning_rate_decay = learning_rate_decay
+        self.max_iter = max_iter
+        self.weight_defaults = weight_defaults
+        self.temperature = temperature
+        self.verbose = verbose  # Prints loss and loss-change
+        self.tol = tol
+        self.regularization = regularization
+        self.lam = lam
+        self.initial_learning_rate = learning_rate
+
+    # Rest of the code...
+class SoftmaxRegression(BaseEstimator, ClassifierMixin):
     def __init__(
         self,
         learning_rate=0.01,
