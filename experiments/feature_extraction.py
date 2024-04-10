@@ -65,7 +65,6 @@ for win_size in WIN_SIZES:
         "librosa_features__mfcc__n_mfcc": 20,
         "librosa_features__mfcc__n_fft": win_size,
         "librosa_features__chroma_stft__n_fft": win_size,
-        "librosa_features__chroma_cens__n_fft": win_size,
         "librosa_features__spectral_centroid__n_fft": win_size,
         "librosa_features__spectral_bandwidth__n_fft": win_size,
         "librosa_features__spectral_rolloff__n_fft": win_size,
