@@ -81,7 +81,7 @@ Calvin Stahoviak:
 ## Kaggle
 Kaggle Score: 0.78 (2nd)
 
-Training Set Accuracy: 0.815
+Team Name: Nick & Calvin
 
 Date Run: 4/7
 
