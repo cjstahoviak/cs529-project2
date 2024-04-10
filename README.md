@@ -10,41 +10,78 @@ Next step requires a conda installation on your system. First setup the environm
 conda env create -f environment.yml
 conda activate cs529_proj2
 ```
-Then run the source code to generate a model...
+Run scripts to generate feature-extracted data:
 ```bash
-python src/
+cd src/
+python src/pickle_data.py
+python ../experiments/feature_extraction.py
+```
+Run the source code to generate a model...
+```bash
+python ../experiments/generate_logistic_regression.py
 ```
 
 
-
 ## File Manifest
-Project tree with description and contributions made on each source file. Both names are placed in parenthesis if both Nick and Calvin collaborated on that task.
+Project tree with description and contributions made on each source file.
 ```bash
-CS529-PROJECT1:
+CS529-PROJECT2:
+C:.
 ├───data
-│   └───raw
+│   ├───processed
+│   │   └───feature_extracted: Holds all feature CSV files for each window size
+│   │       └───pickle/: Includes "pickled" files of the audio DataFrames for quick access.
+│   │
+│   ├───raw
+│   │   │   list_test.txt
+│   │   ├───test/: Test data
+│   │   └───train/: Train data
+│   │
+│   └───results/: Results of hyper parameters grid search
+│           logistic_regression_cv_results.csv
+│           model_comparison_cv_results.csv
+│           model_comparison_cv_results_all_win_sizes.csv
+│
+├───docs
+│       feature_extraction_diagram.drawio
+│       feature_extraction_diagram.png
+│       Music classification with classical ML.pdf
+│
+├───experiments
+│       feature_extraction.py: (NICK) Extracts all features and populates feature_extracted/
+│       generate_logistic_regression.py: (CALVIN) Generates a single model using training data to test
+│       model_comparison.py: (CALVIN) Compares our model to classical learning models
+│       softmax_gridsearch.py: (NICK) Optimizes feature extraction and model hyperparameters
+│
+├───notebooks
+│       results_analysis.ipynb: (NICK) Populates docs/ with diagrams for the report
+│
+└───src
+    │   custom_transformers.py: (NICK) Sklearn transfomers for feature extraction and grid search
+    │   logistic_regression.py: (CALVIN): Implements multi-class logistic regression.
+    │   pickle_data.p: (NICK): Loads data into a DataFrame and "pickles" it into pickle/
+    │   utils.py: (NICK) Utility functions for other files
+    │   __init__.py: (NICK) Python template file
 ```
 
 ## Contributions
 Nick Livingstone:
 - Setup repo and intialized environment (pre-commit hooks, conda, file structure)
+- Refactor and improve logitic model class
+- Developed feature extraction and PCA
+- Developed data formatting
+- Wrote report & generated diagrams
 
 Calvin Stahoviak:
 - Setup repo and intialized environment (pre-commit hooks, conda, file structure)
+- Developed logistic model class
+- Wrote report
+- Wrote README
 
 ## Kaggle
-Score: xx
+Kaggle Score: 0.78 (2nd)
 
-Accuracy: xx
+Training Set Accuracy: 0.815
 
-Date Run: xx
-
-## Rubric
-"Include README; at a minimum, describe how to run code and where to specify path to the dataset."
-
-    (2 points) (File manifest :: describe each file (one sentence)
-
-    (2 points) Team names; contributions from each member
-
-    (2 points) Kaggle score, accuracy, and date run
+Date Run: 4/7
 
