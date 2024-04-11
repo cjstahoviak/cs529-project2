@@ -16,6 +16,8 @@ cd src/
 python pickle_data.py
 python ../experiments/feature_extraction.py
 ```
+> Note: `feature_extraction.py` has an N_JOBS constant at the top of the file which can run the feature extraction process in parallel. The default is 1, but will take a significant amount of time. It's reccomended to increase this value. For more info see the [joblib docs](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html)
+
 Run the source code to generate a model...
 ```bash
 python ../experiments/generate_logistic_regression.py
