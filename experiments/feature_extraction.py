@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
 
@@ -8,31 +9,54 @@ from sklearn.pipeline import Pipeline
 
 from src.custom_transformers import ElementwiseSummaryStats, LibrosaTransformer
 
-N_JOBS = 1
-
 
 def main():
-    parallel_config(n_jobs=N_JOBS)
+
+    parser = ArgumentParser(
+        prog="Audio Feature Extraction",
+        description="Extracts features from pickled audio data using a collection of Librosa features.",
+    )
+
+    parser.add_argument(
+        "--n_jobs",
+        type=int,
+        default=1,
+        help="Number of jobs to run in parallel. See joblib.Parallel for more information.",
+    )
+    parser.add_argument(
+        "--win_sizes",
+        type=int,
+        nargs="+",
+        default=[2048],
+        help="Window sizes to generate features for.",
+    )
+    parser.add_argument(
+        "--source", type=Path, help="(.pkl) Path to pickled audio data.", required=True
+    )
+    parser.add_argument(
+        "--dest",
+        type=Path,
+        help="Directory to save feature extracted data.",
+        default=".",
+    )
+
+    args = parser.parse_args()
 
     # Window sizes to generate features for
-    WIN_SIZES = [512, 1024, 2048, 4096, 8192]
+    WIN_SIZES = args.win_sizes
 
     # File Paths
-    train_fpath = Path("../data/processed/train_data.pkl").resolve()
-    test_fpath = Path("../data/processed/test_data.pkl").resolve()
-    dest_dir = Path("../data/processed/feature_extracted").resolve()
+    source_fpath: Path = args.source.resolve()
+    dest_fpath: Path = args.dest.resolve()
 
-    if not dest_dir.exists():
-        dest_dir.mkdir(parents=True)
+    print("Loading data from:", source_fpath)
 
     # Load data
-    train_df = pd.read_pickle(train_fpath)
-    test_df = pd.read_pickle(test_fpath)
+    df = pd.read_pickle(source_fpath)
 
-    y_train = train_df["target"]
+    target = df["target"]
     # Access with loc so it returns a DataFrame
-    X_train = train_df.loc[:, ["audio"]]
-    X_test = test_df.loc[:, ["audio"]]
+    X = df.loc[:, ["audio"]]
 
     # Librosa features to extract
     librosa_features = [
@@ -81,23 +105,18 @@ def main():
 
         pipe.set_params(**params)
 
-        print("Transforming train data...")
+        print("Transforming data...")
         time_start = datetime.now()
-        train_df = pipe.fit_transform(X_train)
+        X_trans = pipe.fit_transform(X)
+        X_trans["target"] = target
         time_end = datetime.now()
         print(f"Completed in: {time_end - time_start}")
 
-        print("Transforming test data...")
-        time_start = datetime.now()
-        test_df = pipe.transform(X_test)
-        time_end = datetime.now()
-        print(f"Completed in: {time_end - time_start}")
+        out_fpath = dest_fpath / f"{source_fpath.stem}_{win_size}.pkl"
+        print("Saving to:", out_fpath)
 
-        print("Saving features...")
-        train_df["target"] = y_train
-        pd.DataFrame(train_df).to_pickle(dest_dir / f"train_features_{win_size}.pkl")
-        pd.DataFrame(test_df).to_pickle(dest_dir / f"test_features_{win_size}.pkl")
-        print("")
+        pd.DataFrame(X_trans).to_pickle(out_fpath)
+        print("Done!")
 
 
 if __name__ == "__main__":
