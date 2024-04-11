@@ -41,7 +41,7 @@ def main():
     )
 
     args = parser.parse_args()
-
+    parallel_config(n_jobs=args.n_jobs)
     # Window sizes to generate features for
     WIN_SIZES = args.win_sizes
 
