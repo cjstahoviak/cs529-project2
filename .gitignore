@@ -2,8 +2,7 @@
 figures/
 mlruns/
 cache/
-data/processed/*.pkl
-data/raw/train/
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
