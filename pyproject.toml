@@ -19,6 +19,7 @@ scipy = "^1.13.0"
 [tool.poetry.scripts]
 pickle_data = 'src.pickle_data:main'
 extract_features = 'experiments.feature_extraction:main'
+generate_logistic_regression = 'experiments.generate_logistic_regression:main'
 
 [build-system]
 requires = ["poetry-core"]

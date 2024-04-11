@@ -70,9 +70,15 @@ extract_features --n_jobs 4 --source /path/to/data.pkl --dest /target/directory/
 
 ## Running The Model
 
-Run our source code to generate a model...
+Run our source code to generate a model via `experiments\generate_logstic_regression.py`
 ```bash
-python ../experiments/generate_logistic_regression.py
+generate_logistic_regression 
+usage: Run Logistic Regression on Extracted Audio Features [-h] --data_fpath DATA_FPATH
+
+options:
+  -h, --help            show this help message and exit
+  --data_fpath DATA_FPATH, -d DATA_FPATH
+                        Path to the training features pickle file (.pkl)
 ```
 
 Or import our model in your own python file
