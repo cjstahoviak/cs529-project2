@@ -24,7 +24,6 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
-print(args)
 source_dir: Path = args.source
 dest_dir: Path = args.dest
 
