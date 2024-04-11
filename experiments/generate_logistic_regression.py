@@ -5,7 +5,7 @@ from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from logistic_regression import SoftmaxRegression
+from src.logistic_regression import SoftmaxRegression
 
 # Load data
 train_features_fpath = Path(
