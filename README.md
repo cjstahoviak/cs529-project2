@@ -5,11 +5,21 @@ Logistic Regression and Friends
 ## Setup
 Since the training data is over a GB in size, it needs to be manually placed into this project. All that is missing is data\raw\train which can be retrieved from Google Drive.
 
-Next step requires a conda installation on your system. First setup the environment:
+### Light Installation (Recommended)
+The light installation allows you to use the custom transformers, models, and feature extraction scripts used in this project. You will be able to use all files in `src/`, `experiments/feature_extraction.py`, and `experiments/generate_logistic_regression.py`.
+
+```bash
+pip install git+https://github.com/cjstahoviak/cs529-project2
+```
+
+### Full Installation (Not Recomended)
+Full installation allows you to run all the experiments and install dev requirements. Some additional setup for logging in to mlflow is required but not fully detailed in this README. Requires a conda installation on your system as to setup the environment.
 ```bash
 conda env create -f environment.yml
 conda activate cs529_proj2
 ```
+## Usage
+
 Run scripts to generate feature-extracted data:
 ```bash
 cd src/
