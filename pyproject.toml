@@ -18,7 +18,7 @@ scipy = "^1.13.0"
 
 [tool.poetry.scripts]
 pickle_data = 'src.pickle_data:main'
-extract_features = 'experiments.extract_features:main'
+extract_features = 'experiments.feature_extraction:main'
 
 [build-system]
 requires = ["poetry-core"]
