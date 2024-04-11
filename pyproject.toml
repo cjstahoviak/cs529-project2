@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "cs529-project2"
+version = "v1.0"
+description = "A Package For UNM CS529 Project 2 - Logistic Regression and Friends"
+authors = ["Nicholas Elmo Livingstone <nlivingsto@unm.edu>",
+           "Calvin Stahoviak <cstahoviak@unm.edu>"]
+license = "MIT"
+readme = "README.md"
+packages = [{includes = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^1.26.4"
+pandas = "^2.2.2"
+scikit-learn = "^1.4.2"
+librosa = "^0.10.1"
+scipy = "^1.13.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
