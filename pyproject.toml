@@ -6,7 +6,7 @@ authors = ["Nicholas Elmo Livingstone <nlivingsto@unm.edu>",
            "Calvin Stahoviak <cstahoviak@unm.edu>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "src"}]
+packages = [{include = ["src", "experiments"]}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -16,6 +16,9 @@ scikit-learn = "^1.4.2"
 librosa = "^0.10.1"
 scipy = "^1.13.0"
 
+[tool.poetry.scripts]
+pickle_data = 'src.pickle_data:main'
+extract_features = 'experiments.extract_features:main'
 
 [build-system]
 requires = ["poetry-core"]
