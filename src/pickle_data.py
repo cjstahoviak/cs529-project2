@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from pathlib import Path
 
-from utils import load_audio_to_df
+from .utils import load_audio_to_df
 
 
 def main():

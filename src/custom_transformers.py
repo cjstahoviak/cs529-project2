@@ -7,7 +7,7 @@ from pandas import Series
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
 
-from utils import describe_as_df
+from .utils import describe_as_df
 
 
 class ElementwiseSummaryStats(BaseEstimator, TransformerMixin):
