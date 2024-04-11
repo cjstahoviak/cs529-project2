@@ -11,7 +11,7 @@ from custom_transformers import ElementwiseSummaryStats, LibrosaTransformer
 parallel_config(n_jobs=-2)
 
 # Window sizes to generate features for
-WIN_SIZES = [8192]
+WIN_SIZES = [512, 1024, 2048, 4096, 8192]
 
 # File Paths
 train_fpath = Path("../data/processed/train_data.pkl").resolve()
