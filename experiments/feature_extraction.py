@@ -6,7 +6,7 @@ from joblib import parallel_config
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 
-from src.custom_transformers import ElementwiseSummaryStats, LibrosaTransformer
+from custom_transformers import ElementwiseSummaryStats, LibrosaTransformer
 
 N_JOBS = 1
 

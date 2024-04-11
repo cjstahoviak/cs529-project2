@@ -13,8 +13,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
-from src.custom_transformers import WindowSelector
-from src.logistic_regression import SoftmaxRegression
+from custom_transformers import WindowSelector
+from logistic_regression import SoftmaxRegression
 
 N_JOBS = 1
 EXPERIMENT_NAME = "/cs529_project_2_softmax_gridsearch"
