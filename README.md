@@ -20,13 +20,53 @@ conda activate cs529_proj2
 ```
 ## Usage
 
-Run scripts to generate feature-extracted data:
+### Feature Extraction
+
+*If you did the light installation above, these files can be called from the command line.*
+
+The data must be pickled before feature extraction with `pickle_data`:
 ```bash
-cd src/
-python pickle_data.py
-python ../experiments/feature_extraction.py
+pickle_data --help
+usage: Pickles Audio Data [-h] [--source SOURCE] [--dest DEST]
+
+Converts raw audio data to a pickled pandas DataFrame. Will search for .au files in the given directory.
+
+options:
+  -h, --help            show this help message and exit
+  --source SOURCE, -s SOURCE
+                        Path to folder containing audio data.
+  --dest DEST, -d DEST  Path to save pickled data. (.pkl)
 ```
-> Note: `feature_extraction.py` has an N_JOBS constant at the top of the file which can run the feature extraction process in parallel. The default is 1, but will take a significant amount of time. It's reccomended to increase this value. For more info see the [joblib docs](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html)
+
+example
+
+```
+pickle_data --source /directory/of/au/files/ --dest target/folder/data.pkl
+```
+
+Then you can extract audio features with `extract_features`
+
+```bash
+extract_features --help
+usage: Audio Feature Extraction [-h] [--n_jobs N_JOBS] [--win_sizes WIN_SIZES [WIN_SIZES ...]] --source SOURCE [--dest DEST]
+
+Extracts features from pickled audio data using a collection of Librosa features. It will automatically generate a new file for each window size. 
+
+options:
+  -h, --help            show this help message and exit
+  --n_jobs N_JOBS       Number of jobs to run in parallel. See joblib.Parallel for more information.
+  --win_sizes WIN_SIZES [WIN_SIZES ...]
+                        Window sizes to generate features for.
+  --source SOURCE       (.pkl) Path to pickled audio data.
+  --dest DEST           Directory to save feature extracted data.
+```
+
+Example
+```bash
+extract_features --n_jobs 4 --source /path/to/data.pkl --dest /target/directory/ --win_sizes 1024 2048 4096 
+```
+
+> Note: Feature extraction has an N_JOBS parameter which can run the feature extraction process in parallel. The default is 1, but will take a significant amount of time. It's reccomended to increase this value. For more info see the [joblib docs](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html)
 
 Run the source code to generate a model...
 ```bash
