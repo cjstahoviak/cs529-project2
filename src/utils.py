@@ -14,7 +14,8 @@ def get_genre_from_path(path: Path):
     Returns:
         str: The genre extracted from the file path.
     """
-    return path.parts[-2]
+    genre = path.stem.split(".")[0]
+    return genre
 
 
 def load_audio_files(data_dir: Path):
