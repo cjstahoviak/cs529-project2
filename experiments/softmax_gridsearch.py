@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from custom_transformers import WindowSelector
 from logistic_regression import SoftmaxRegression
 
-N_JOBS = os.cpu_count() * 2
+N_JOBS = 1
 EXPERIMENT_NAME = "/cs529_project_2_softmax_gridsearch"
 DATA_FOLDER_PATH = Path("../data/processed/feature_extracted/pickle").resolve()
 WIN_SIZES = [1024, 2048, 4096, 8192]
