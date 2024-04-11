@@ -68,11 +68,24 @@ extract_features --n_jobs 4 --source /path/to/data.pkl --dest /target/directory/
 
 > Note: Feature extraction has an N_JOBS parameter which can run the feature extraction process in parallel. The default is 1, but will take a significant amount of time. It's reccomended to increase this value. For more info see the [joblib docs](https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html)
 
-Run the source code to generate a model...
+## Running The Model
+
+Run our source code to generate a model...
 ```bash
 python ../experiments/generate_logistic_regression.py
 ```
 
+Or import our model in your own python file
+```python
+from src.logistic_regression import SoftmaxRegression
+.
+.
+.
+clf = SoftmaxRegression()
+clf.fit(x_train, y_train)
+
+clf.predict(x_test)
+```
 
 ## File Manifest
 Project tree with description and contributions made on each source file.
