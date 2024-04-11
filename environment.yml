@@ -14,5 +14,4 @@ dependencies:
   - ipython
   - librosa
   - databricks-sdk
-  - mlxtend
   - ipykernel
