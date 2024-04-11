@@ -35,11 +35,11 @@ C:.
 │   │       └───pickle/: Includes "pickled" files of the audio DataFrames for quick access.
 │   │
 │   ├───raw
-│   │   │   list_test.txt
-│   │   ├───test/: Test data
-│   │   └───train/: Train data
-│   │
-│   └───results/: Results of hyper parameters grid search
+│   │   list_test.txt
+│   ├───test/: Test data
+│   └───train/: Train data
+│
+├───results/: Results of hyper parameters grid search
 │           logistic_regression_cv_results.csv
 │           model_comparison_cv_results.csv
 │           model_comparison_cv_results_all_win_sizes.csv
