@@ -8,7 +8,9 @@ from sklearn.pipeline import Pipeline
 
 from custom_transformers import ElementwiseSummaryStats, LibrosaTransformer
 
-parallel_config(n_jobs=-2)
+N_JOBS = 1
+
+parallel_config(n_jobs=N_JOBS)
 
 # Window sizes to generate features for
 WIN_SIZES = [512, 1024, 2048, 4096, 8192]
