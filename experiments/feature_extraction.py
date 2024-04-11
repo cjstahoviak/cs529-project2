@@ -18,6 +18,9 @@ train_fpath = Path("../data/processed/train_data.pkl").resolve()
 test_fpath = Path("../data/processed/test_data.pkl").resolve()
 dest_dir = Path("../data/processed/feature_extracted").resolve()
 
+if not dest_dir.exists():
+    dest_dir.mkdir(parents=True)
+
 # Load data
 train_df = pd.read_pickle(train_fpath)
 test_df = pd.read_pickle(test_fpath)
